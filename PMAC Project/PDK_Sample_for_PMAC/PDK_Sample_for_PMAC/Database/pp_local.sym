@@ -1,0 +1,6 @@
+1	SUBPROGMySampleFunction	myinp	0	1
+2	SUBPROGMySampleFunction	myrtn	1	1
+3	SUBPROGTimer	DelayTimeSec	0	1
+4	SUBPROGTimer	EndTimeSec	1	1
+5	SUBPROGTimer	DelayTimeMsec	0	1
+6	SUBPROGTimer	EndTimeMsec	1	1

@@ -1,0 +1,36 @@
+			<ParameterSection>
+			<Name name="local:ps1">GlobalIO</Name>
+			<Description name="local:ps1.Desc">Global Variables</Description>
+			<ParameterSection>
+			<Name name="local:ps1">Ptr(M)Variables</Name>
+			<Description name="local:ps1.Desc">Global ptr(M) variables</Description>
+			</ParameterSection>
+			<ParameterSection>
+			<Name name="local:ps1">Global(P)Variables</Name>
+			<Description name="local:ps1.Desc">Global global(P) variables</Description>
+			</ParameterSection>
+			<ParameterSection>
+			<Name name="local:ps1">CSGlobal(Q)Variables</Name>
+			<Description name="local:ps1.Desc">Global csglobal(Q) variables</Description>
+			<ParameterSection>
+			<Name name="local:ps1">Coord[0]</Name>
+			<Description name="local:ps1.Desc">Coord[0] csglobal(Q) variables</Description>
+			</ParameterSection>
+			<ParameterSection>
+			<Name name="local:ps1">Coord[1]</Name>
+			<Description name="local:ps1.Desc">Coord[1] csglobal(Q) variables</Description>
+			</ParameterSection>
+			<ParameterSection>
+			<Name name="local:ps1">Coord[2]</Name>
+			<Description name="local:ps1.Desc">Coord[2] csglobal(Q) variables</Description>
+			</ParameterSection>
+			<ParameterSection>
+			<Name name="local:ps1">Coord[3]</Name>
+			<Description name="local:ps1.Desc">Coord[3] csglobal(Q) variables</Description>
+			</ParameterSection>
+			</ParameterSection>
+				</ParameterSection>
+			</HostParameterSet>
+		</Connector>
+	</Device>
+</DeviceDescription>

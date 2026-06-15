@@ -1,0 +1,8 @@
+/*For more information see notes.txt in the Documentation folder */
+
+open subprog MySampleFunction(myinp, &myrtn)
+// --------------------User Code Goes Here------------------------
+close
+
+
+

@@ -1,0 +1,5 @@
+/*For more information see notes.txt in the Documentation folder */
+
+open plc Myplc1
+// --------------------User Code Goes Here------------------------
+close

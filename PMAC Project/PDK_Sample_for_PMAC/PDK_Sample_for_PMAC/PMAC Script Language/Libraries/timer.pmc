@@ -1,0 +1,15 @@
+/*For more information see notes.txt in the Documentation folder */
+
+open subprog Timer
+SUB: sec (DelayTimeSec)
+LOCAL EndTimeSec
+EndTimeSec = Sys.Time + DelayTimeSec 
+WHILE (EndTimeSec > Sys.Time) {} 
+RETURN 
+
+SUB: msec (DelayTimeMsec)
+LOCAL EndTimeMsec
+EndTimeMsec = Sys.Time + DelayTimeMsec * 0.001
+WHILE (EndTimeMsec > Sys.Time) {} 
+RETURN 
+CLOSE

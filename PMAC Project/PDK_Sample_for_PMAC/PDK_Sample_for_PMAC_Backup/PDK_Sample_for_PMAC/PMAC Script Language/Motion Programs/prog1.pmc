@@ -1,0 +1,6 @@
+/*For more information see notes.txt in the Documentation folder */
+
+open prog Myprog1
+// --------------------User Code Goes Here------------------------
+close
+

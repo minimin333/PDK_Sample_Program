@@ -1,0 +1,180 @@
+/******************************** pp_proj.h *****************************************/
+Description:
+	pp_proj.h is the C header for accessing mapped PMAC Global, CSGlobal, Ptr variables.  
+	All the PMAC Global, CSGlobal, Ptr script variables defined in the PMAC Script language 
+	folder are mapped to the pp_proj.h header file.  This header file is included in all 
+	the C apps and the following description applies to all the apps. 
+
+Modes:
+	You can access variables defined in pp_proj.h in two different modes.  You must 
+	choose _PPScriptMode_ or _EnumMode_ to have access to the mapped variables in your 
+	C programs.  Define one of the following before the #include "../../Include/pp_proj.h" 
+	statement
+	#define _PPScriptMode_  or 	#define _EnumMode_
+	 
+	_PPScriptMode_ : 
+		is for PMAC Script like access to global & csglobal variables.  
+		The following shows the Script equivalent access method in the C programs:
+
+		Script variable declaration     Mapped equivalent use in C programs
+		---------------------------		----------------------------------
+		global   Mypvar					Mypvar
+		global   Myparray(32)			Myparray(i)
+		csglobal Myqvar					Myqvar(i) where "i" is Coord #
+		csglobal Myqarray(16)			Myqvar(i,j) where "j" is index
+
+	_EnumMode_: 
+		is for accessing mapped PMAC variables in enum data type format by using 
+		Set & Get global functions. The following shows the Script equivalent access method 
+		in the C programs:
+
+		Script variable declaration     Mapped equivalent use in C programs
+		---------------------------		----------------------------------
+		global   Mypvar					SetEnumGlobalVar(Mypvar, data)
+		global   Myparray(32)			SetEnumGlobalArrayVar(Myparray,index,data) 
+		csglobal Myqvar					GetEnumCSGlobalVar(Myqvar,Coord_num)
+		csglobal Myqarray(16)			SetEnumCSGlobalArrayVar(Myqarray,index,Coord_num)
+
+/***********************************************************************************/
+
+/******************************** Background C Apps ********************************/
+Description:
+	Background C Programs are standard programs than run by the priority allocated by the 
+	Linux GPOS.  To access the PMAC's shared memory structure from the program you would 
+	need to call InitLibrary() method and before exiting the main process call CloseLibrary() 
+	method.  All the code that needs to access the shared memory structure should be within 
+	the init and close block. 
+
+	To use a function defined in the Libraries folder, create a prototype of the function
+	in your program or in a header file that is included in this file.
+	For example, if a Library project has been created with the following function:
+
+	int MyFunction(int MyVar)
+	{
+		return MyVar*10;
+	}
+
+	And you intend to use that function in the background c program, then a prototype of this 
+	function must be created in your program or in the header file that is being included in 
+	this file. The prototype is the following:
+	int MyFunction(int);
+	You can call this function within the program and the compiler would manage the project
+	and link the library to your background c program.
+
+	The following is an example to show how to control the priority of the background c program:
+
+	int main(void) 
+	{
+		//---------------------------------------------------------------------
+		// Required Startup Code: Insures that this APP is run as an RT or NON
+		// RT APP otherwise depending upon how it is started it will inherit
+		// the scheduling priority and policy of the task that started it.
+		//---------------------------------------------------------------------
+		//----------------------------------------------
+		// Uncomment the below #define to run as a RT Linux APP
+		// #define RUN_AS_RT_APP
+		// For older F/W uncomment the following if you get a compile error:
+		// #define BACKGROUND_RT_PRIORITY 50
+		// #define NANO_5MSEC 5000000
+		//----------------------------------------------
+
+  		struct sched_param param;
+  		int done = 0;
+		struct timespec sleeptime = {0};
+		sleeptime.tv_nsec = NANO_5MSEC;	// #defines NANO_1MSEC, NANO_5MSEC & NANO_10MSEC are defined
+
+  		#ifndef RUN_AS_RT_APP	
+			//-----------------------------
+			// Runs as a NON RT Linux APP
+			//-----------------------------
+			param.__sched_priority = 0;
+			pthread_setschedparam(pthread_self(),  SCHED_OTHER, &param);
+  		#else 
+			//---------------------------------------------------------------
+			// Runs as a RT Linux APP with the same scheduling policy as the
+			// Background script PLCs
+			// To run at a recommended lower priority use BACKGROUND_RT_PRIORITY - 10
+			// To run at a higher priority use BACKGROUND_RT_PRIORITY + 1
+			//---------------------------------------------------------------------
+			param.__sched_priority =  BACKGROUND_RT_PRIORITY - 10;
+			pthread_setschedparam(pthread_self(),  SCHED_FIFO, &param);
+  		#endif
+
+		InitLibrary();  // Required for accessing Power PMAC library
+			// your code goes here	
+		CloseLibrary();	
+		return 0;
+	} 
+/***********************************************************************************/
+
+/************************************** CPLCs **************************************/
+Description:
+	CPLCs are shared objects, .so libraries, that PMAC's RTOS will load and call the 
+	methods defined in these libraries in pre-defined intervals.  Bgcplcs and RTICplc 
+	are two types of CPLCs.
+
+Bgcplcs:
+	Bgcplcs are background C plcs that are called between each scan of one background Script
+	PLC.  There are a total of 32 Bgcplcs.  The principal method defined in the Bgcplc is 
+	called user_cplc() and its name should not be altered.  The following command can be 
+	used to enable/disable a Bgcplc UserAlgo.BgCplc[n] = 1 to enable and 0 to disable where 
+	n is the Bgcplc number.
+
+RTICplc:
+	RTICplc is a real time C plc that is called at the real time interrupt rate.  There
+	is only one RTICplc and the principal method defined in the RTICplc is called 
+	realtimeinterrupt_plcc() and its name should not be altered. The following command 
+	can be used to enable/disable a RTICplc UserAlgo.RtiCplc = 1 to enable and 0 to disable. 
+
+/***********************************************************************************/
+
+/********************************* Realtime Routines ********************************/
+Description:
+	Realtime Routines serve multiple purpose, they are usually used for generating custom 
+	servo and phase algorithm, but can also be used on a virtual motor for performing 
+	high speed I/O tasks or electronic gearing.  It also serves as way to delegate a C method
+	call from within the PMAC script PLCs via the CfromScript() method.  Realtime routines 
+	is compiled both as a Kernel object (.ko ) for realtime custom servo and phase routines 
+	and also compiled as a shared object (.so ) to be able to use the CfromScript() method 
+	in the Script PLCs.
+
+How to:
+	Realtime Routines code has a __KERNEL__ and general mode.  In usercode.c and usercode.h 
+	the statement #ifdef __KERNEL__ defines the Kernel mode.  In this mode linux/module.h is 
+	included in the header file and all the other local paths that are included must be in a 
+	short path format.  Spaces and long names are not accepted in this mode.  The following 
+	is an example of including a file in Kernel and general mode;
+
+	#ifdef __KERNEL__
+		#include "../../BACKGR~1/TESTCA~1/common.h"
+	#else
+		#include "../../Background Programs/testcapp/common.h"
+	#endif
+
+	To add a new method to the Realtime Routines first you must define the prototype of the 
+	method and then export the method, this is usually done in the header file, the following 
+	is an example defined in the usercode.h:
+
+	double user_pid_ctrl( struct MotorData *Mptr);
+	EXPORT_SYMBOL(user_pid_ctrl);
+
+/***********************************************************************************/
+
+/****************************** Motion, PLC and Libraries *****************************/
+Description:
+	Motion, PLC and Libraries and PMAC script language programs.  To create any of the 
+	programs you should follow the following format: 
+	
+	Open prog / plc / subprog <Name of the program>
+	Such as:
+	Open prog Myprog1
+	Open plc Myplc1
+	Open subprog Mysubprog1
+
+	The Power PMAC IDE preprocessor will replace the program names with appropriate number
+	Subprograms can be called from Motion and plc programs.
+
+	timer.pmc subprogram can be used in a plc or motion program as a delay timer.  
+	The following are some examples of how to call this subprogram in a plc or motion
+	program: Timer.sec(1) or Timer.msec(100)
+/***********************************************************************************/

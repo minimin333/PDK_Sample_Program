@@ -1,0 +1,562 @@
+
+#define VirtualMtrNo L0
+
+#define VirtualECTNo L1
+
+
+
+///////////////////////////////////모터 1////////////////////////////////
+
+VirtualMtrNo = 1 //가상축 모터 번호. 
+
+VirtualECTNo = 1 //가상축 엔코더 컨버전 테이블 번호
+
+ 
+
+// Encoder Table 
+
+EncTable[VirtualECTNo].index1=0;  // 2번째, shifted left after it is first shifted right
+
+EncTable[VirtualECTNo].index2=0;  // 먼저, first shifted right as specified by index2
+
+EncTable[VirtualECTNo].index3=0;
+
+EncTable[VirtualECTNo].index4=1;
+
+EncTable[VirtualECTNo].index5=0;
+
+EncTable[VirtualECTNo].index6=0
+
+
+
+EncTable[VirtualECTNo].type=11;
+
+EncTable[VirtualECTNo].pEnc1 = Sys.pushm;  //Type=11 pEnc1 is not used for this type.
+
+EncTable[VirtualECTNo].pEnc = Motor[VirtualMtrNo].IqCmd.a;
+
+EncTable[VirtualECTNo].MaxDelta=0
+
+EncTable[VirtualECTNo].ScaleFactor=1/256;
+
+
+
+
+
+// Motor Parameter Setting
+
+
+
+Motor[VirtualMtrNo].Ctrl=Sys.PidCtrl; // only need simple PID loop
+
+Motor[VirtualMtrNo].ServoCtrl=1; //Motor On/Off
+
+
+
+Motor[VirtualMtrNo].pDac=Sys.pushm
+
+
+
+Motor[VirtualMtrNo].EncType=0;  //(No hardware assigned)
+
+
+
+Motor[VirtualMtrNo].pEnc=EncTable[VirtualECTNo].a
+
+Motor[VirtualMtrNo].pEnc2=EncTable[VirtualECTNo].a
+
+
+
+Motor[VirtualMtrNo].pAmpEnable=0;
+
+Motor[VirtualMtrNo].AmpEnableBit=22
+
+
+
+Motor[VirtualMtrNo].pAmpFault=0;
+
+Motor[VirtualMtrNo].AmpFaultBit=23
+
+
+
+Motor[VirtualMtrNo].pLimits=0;
+
+Motor[VirtualMtrNo].LimitBits=25
+
+
+
+Motor[VirtualMtrNo].CaptureMode=1;// software capture 
+
+
+
+// needed gains
+
+Motor[VirtualMtrNo].Servo.Kp=1;
+
+Motor[VirtualMtrNo].Servo.Kvfb=0;
+
+Motor[VirtualMtrNo].Servo.Kvff=0;
+
+Motor[VirtualMtrNo].Servo.Kaff=0;
+
+Motor[VirtualMtrNo].Servo.Ki=0;
+
+Motor[VirtualMtrNo].Servo.MaxPosErr=1000
+
+Motor[VirtualMtrNo].Servo.MaxInt=32000
+
+
+
+Motor[VirtualMtrNo].Pos2Sf=1
+
+Motor[VirtualMtrNo].PosSf=1
+
+
+
+//소프트웨어 리미트
+
+Motor[VirtualMtrNo].MaxPos=0
+
+Motor[VirtualMtrNo].MinPos=0
+
+
+
+Motor[VirtualMtrNo].InvAmax=0
+
+Motor[VirtualMtrNo].InvDmax=0
+
+Motor[VirtualMtrNo].InvJmax=0
+
+Motor[VirtualMtrNo].MaxSpeed=0
+
+
+
+Motor[VirtualMtrNo].MaxDac = 32767
+
+Motor[VirtualMtrNo].FatalFeLimit = 0
+
+Motor[VirtualMtrNo].WarnFeLimit = 0
+
+Motor[VirtualMtrNo].Servo.MaxPosErr = 1000000
+
+
+
+Motor[VirtualMtrNo].JogTa = 100
+
+Motor[VirtualMtrNo].JogTs = 100
+
+Motor[VirtualMtrNo].JogSpeed = 10
+
+
+
+////////////////////////////////////////////////////////////////////
+
+
+
+///////////////////////////////////모터 2////////////////////////////////
+
+VirtualMtrNo = 2 //가상축 모터 번호. 
+
+VirtualECTNo = 2 //가상축 엔코더 컨버전 테이블 번호
+
+ 
+
+// Encoder Table 
+
+EncTable[VirtualECTNo].index1=0;  // 2번째, shifted left after it is first shifted right
+
+EncTable[VirtualECTNo].index2=0;  // 먼저, first shifted right as specified by index2
+
+EncTable[VirtualECTNo].index3=0;
+
+EncTable[VirtualECTNo].index4=1;
+
+EncTable[VirtualECTNo].index5=0;
+
+EncTable[VirtualECTNo].index6=0
+
+
+
+EncTable[VirtualECTNo].type=11;
+
+EncTable[VirtualECTNo].pEnc1 = Sys.pushm;  //Type=11 pEnc1 is not used for this type.
+
+EncTable[VirtualECTNo].pEnc = Motor[VirtualMtrNo].IqCmd.a;
+
+EncTable[VirtualECTNo].MaxDelta=0
+
+EncTable[VirtualECTNo].ScaleFactor=1/256;
+
+
+
+
+
+// Motor Parameter Setting
+
+
+
+Motor[VirtualMtrNo].Ctrl=Sys.PidCtrl; // only need simple PID loop
+
+Motor[VirtualMtrNo].ServoCtrl=1; //Motor On/Off
+
+
+
+Motor[VirtualMtrNo].pDac=Sys.pushm
+
+
+
+Motor[VirtualMtrNo].EncType=0;  //(No hardware assigned)
+
+
+
+Motor[VirtualMtrNo].pEnc=EncTable[VirtualECTNo].a
+
+Motor[VirtualMtrNo].pEnc2=EncTable[VirtualECTNo].a
+
+
+
+Motor[VirtualMtrNo].pAmpEnable=0;
+
+Motor[VirtualMtrNo].AmpEnableBit=22
+
+
+
+Motor[VirtualMtrNo].pAmpFault=0;
+
+Motor[VirtualMtrNo].AmpFaultBit=23
+
+
+
+Motor[VirtualMtrNo].pLimits=0;
+
+Motor[VirtualMtrNo].LimitBits=25
+
+
+
+Motor[VirtualMtrNo].CaptureMode=1;// software capture 
+
+
+
+// needed gains
+
+Motor[VirtualMtrNo].Servo.Kp=1;
+
+Motor[VirtualMtrNo].Servo.Kvfb=0;
+
+Motor[VirtualMtrNo].Servo.Kvff=0;
+
+Motor[VirtualMtrNo].Servo.Kaff=0;
+
+Motor[VirtualMtrNo].Servo.Ki=0;
+
+Motor[VirtualMtrNo].Servo.MaxPosErr=1000
+
+Motor[VirtualMtrNo].Servo.MaxInt=32000
+
+
+
+Motor[VirtualMtrNo].Pos2Sf=1
+
+Motor[VirtualMtrNo].PosSf=1
+
+
+
+//소프트웨어 리미트
+
+Motor[VirtualMtrNo].MaxPos=0
+
+Motor[VirtualMtrNo].MinPos=0
+
+
+
+Motor[VirtualMtrNo].InvAmax=0
+
+Motor[VirtualMtrNo].InvDmax=0
+
+Motor[VirtualMtrNo].InvJmax=0
+
+Motor[VirtualMtrNo].MaxSpeed=0
+
+
+
+Motor[VirtualMtrNo].MaxDac = 32767
+
+Motor[VirtualMtrNo].FatalFeLimit = 0
+
+Motor[VirtualMtrNo].WarnFeLimit = 0
+
+Motor[VirtualMtrNo].Servo.MaxPosErr = 1000000
+
+
+
+Motor[VirtualMtrNo].JogTa = 100
+
+Motor[VirtualMtrNo].JogTs = 100
+
+Motor[VirtualMtrNo].JogSpeed = 10
+
+
+
+////////////////////////////////////////////////////////////////////
+
+
+
+///////////////////////////////////모터 3////////////////////////////////
+
+VirtualMtrNo = 3 //가상축 모터 번호. 
+
+VirtualECTNo = 3 //가상축 엔코더 컨버전 테이블 번호
+
+ 
+
+// Encoder Table 
+
+EncTable[VirtualECTNo].index1=0;  // 2번째, shifted left after it is first shifted right
+
+EncTable[VirtualECTNo].index2=0;  // 먼저, first shifted right as specified by index2
+
+EncTable[VirtualECTNo].index3=0;
+
+EncTable[VirtualECTNo].index4=1;
+
+EncTable[VirtualECTNo].index5=0;
+
+EncTable[VirtualECTNo].index6=0
+
+
+
+EncTable[VirtualECTNo].type=11;
+
+EncTable[VirtualECTNo].pEnc1 = Sys.pushm;  //Type=11 pEnc1 is not used for this type.
+
+EncTable[VirtualECTNo].pEnc = Motor[VirtualMtrNo].IqCmd.a;
+
+EncTable[VirtualECTNo].MaxDelta=0
+
+EncTable[VirtualECTNo].ScaleFactor=1/256;
+
+// Motor Parameter Setting
+
+
+
+Motor[VirtualMtrNo].Ctrl=Sys.PidCtrl; // only need simple PID loop
+
+Motor[VirtualMtrNo].ServoCtrl=1; //Motor On/Off
+
+
+
+Motor[VirtualMtrNo].pDac=Sys.pushm
+
+
+
+Motor[VirtualMtrNo].EncType=0;  //(No hardware assigned)
+
+
+
+Motor[VirtualMtrNo].pEnc=EncTable[VirtualECTNo].a
+
+Motor[VirtualMtrNo].pEnc2=EncTable[VirtualECTNo].a
+
+
+
+Motor[VirtualMtrNo].pAmpEnable=0;
+
+Motor[VirtualMtrNo].AmpEnableBit=22
+
+
+
+Motor[VirtualMtrNo].pAmpFault=0;
+
+Motor[VirtualMtrNo].AmpFaultBit=23
+
+
+
+Motor[VirtualMtrNo].pLimits=0;
+
+Motor[VirtualMtrNo].LimitBits=25
+
+
+
+Motor[VirtualMtrNo].CaptureMode=1;// software capture 
+
+
+
+// needed gains
+
+Motor[VirtualMtrNo].Servo.Kp=1;
+
+Motor[VirtualMtrNo].Servo.Kvfb=0;
+
+Motor[VirtualMtrNo].Servo.Kvff=0;
+
+Motor[VirtualMtrNo].Servo.Kaff=0;
+
+Motor[VirtualMtrNo].Servo.Ki=0;
+
+Motor[VirtualMtrNo].Servo.MaxPosErr=1000
+
+Motor[VirtualMtrNo].Servo.MaxInt=32000
+
+
+
+Motor[VirtualMtrNo].Pos2Sf=1
+
+Motor[VirtualMtrNo].PosSf=1
+
+
+//소프트웨어 리미트
+
+Motor[VirtualMtrNo].MaxPos=0
+
+Motor[VirtualMtrNo].MinPos=0
+
+
+Motor[VirtualMtrNo].InvAmax=0
+
+Motor[VirtualMtrNo].InvDmax=0
+
+Motor[VirtualMtrNo].InvJmax=0
+
+Motor[VirtualMtrNo].MaxSpeed=0
+
+Motor[VirtualMtrNo].MaxDac = 32767
+
+Motor[VirtualMtrNo].FatalFeLimit = 0
+
+Motor[VirtualMtrNo].WarnFeLimit = 0
+
+Motor[VirtualMtrNo].Servo.MaxPosErr = 1000000
+
+Motor[VirtualMtrNo].JogTa = 100
+
+Motor[VirtualMtrNo].JogTs = 100
+
+Motor[VirtualMtrNo].JogSpeed = 10
+
+
+///////////////////////////////////모터 4////////////////////////////////
+
+VirtualMtrNo = 4 //가상축 모터 번호. 
+
+VirtualECTNo = 4 //가상축 엔코더 컨버전 테이블 번호
+
+ 
+
+// Encoder Table 
+
+EncTable[VirtualECTNo].index1=0;  // 2번째, shifted left after it is first shifted right
+
+EncTable[VirtualECTNo].index2=0;  // 먼저, first shifted right as specified by index2
+
+EncTable[VirtualECTNo].index3=0;
+
+EncTable[VirtualECTNo].index4=1;
+
+EncTable[VirtualECTNo].index5=0;
+
+EncTable[VirtualECTNo].index6=0
+
+
+EncTable[VirtualECTNo].type=11;
+
+EncTable[VirtualECTNo].pEnc1 = Sys.pushm;  //Type=11 pEnc1 is not used for this type.
+
+EncTable[VirtualECTNo].pEnc = Motor[VirtualMtrNo].IqCmd.a;
+
+EncTable[VirtualECTNo].MaxDelta=0
+
+EncTable[VirtualECTNo].ScaleFactor=1/256;
+
+// Motor Parameter Setting
+
+Motor[VirtualMtrNo].Ctrl=Sys.PidCtrl; // only need simple PID loop
+
+Motor[VirtualMtrNo].ServoCtrl=1; //Motor On/Off
+
+
+Motor[VirtualMtrNo].pDac=Sys.pushm
+
+
+Motor[VirtualMtrNo].EncType=0;  //(No hardware assigned)
+
+
+Motor[VirtualMtrNo].pEnc=EncTable[VirtualECTNo].a
+
+Motor[VirtualMtrNo].pEnc2=EncTable[VirtualECTNo].a
+
+
+Motor[VirtualMtrNo].pAmpEnable=0;
+
+Motor[VirtualMtrNo].AmpEnableBit=22
+
+
+Motor[VirtualMtrNo].pAmpFault=0;
+
+Motor[VirtualMtrNo].AmpFaultBit=23
+
+Motor[VirtualMtrNo].pLimits=0;
+
+Motor[VirtualMtrNo].LimitBits=25
+
+Motor[VirtualMtrNo].CaptureMode=1;// software capture 
+
+// needed gains
+
+Motor[VirtualMtrNo].Servo.Kp=1;
+
+Motor[VirtualMtrNo].Servo.Kvfb=0;
+
+Motor[VirtualMtrNo].Servo.Kvff=0;
+
+Motor[VirtualMtrNo].Servo.Kaff=0;
+
+Motor[VirtualMtrNo].Servo.Ki=0;
+
+Motor[VirtualMtrNo].Servo.MaxPosErr=1000
+
+Motor[VirtualMtrNo].Servo.MaxInt=32000
+
+Motor[VirtualMtrNo].Pos2Sf=1
+
+Motor[VirtualMtrNo].PosSf=1
+
+//소프트웨어 리미트
+
+Motor[VirtualMtrNo].MaxPos=0
+
+Motor[VirtualMtrNo].MinPos=0
+
+Motor[VirtualMtrNo].InvAmax=0
+
+Motor[VirtualMtrNo].InvDmax=0
+
+Motor[VirtualMtrNo].InvJmax=0
+
+Motor[VirtualMtrNo].MaxSpeed=0
+
+
+
+Motor[VirtualMtrNo].MaxDac = 32767
+
+Motor[VirtualMtrNo].FatalFeLimit = 0
+
+Motor[VirtualMtrNo].WarnFeLimit = 0
+
+Motor[VirtualMtrNo].Servo.MaxPosErr = 1000000
+
+Motor[VirtualMtrNo].JogTa = 100
+Motor[VirtualMtrNo].JogTs = 100
+Motor[VirtualMtrNo].JogSpeed = 10
+
+////////////////////////////////////////////////////////////////////
+
+
+
+Motor[1].pLimits=Sys.Udata[102].a;
+Motor[1].LimitBits=9
+Motor[2].pLimits=Sys.Udata[103].a;
+Motor[2].LimitBits=9
+Motor[3].pLimits=Sys.Udata[104].a;
+Motor[3].LimitBits=9
+Motor[4].pLimits=Sys.Udata[105].a;
+Motor[4].LimitBits=9

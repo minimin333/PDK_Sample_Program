@@ -1,0 +1,17 @@
+</var/ftp/usrflash/Project/PMAC Script Language/Libraries/subprog1.pmc>,100000
+0,5
+<end>
+</var/ftp/usrflash/Project/PMAC Script Language/Libraries/timer.pmc>,100001
+0,6
+1,7
+2,8
+3,8
+4,12
+5,13
+6,14
+7,14
+8,15
+<end>
+</var/ftp/usrflash/Project/PMAC Script Language/PLC Programs/plc1.plc>,1
+0,5
+<end>
