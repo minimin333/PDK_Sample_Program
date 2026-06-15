@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -34,8 +34,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="ODT.PowerPmacComLib">
-      <HintPath>..\..\..\..\..\..\..\..\..\..\DeltaTau\PowerPMAC\4\PDK\ODT.PowerPmacComLib.dll</HintPath>
+    <Reference Include="ODT.PowerPmacComLib, Version=4.3.0.78, Culture=neutral, PublicKeyToken=21714fc2a36b3259, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\DeltaTau\PowerPMAC\4\PDK\ODT.PowerPmacComLib.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
