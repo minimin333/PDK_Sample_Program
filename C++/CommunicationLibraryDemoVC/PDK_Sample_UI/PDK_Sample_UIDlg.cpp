@@ -174,14 +174,14 @@ BOOL CPDKSampleUIDlg::OnInitDialog()
     // ================= [ PMAC A Area (좌측) ] =================
     int ax = 20, ay = 20, aw = 550; // 좌측 영역 (너비 550)
     m_lblIpA.Create(_T("IP A:"), WS_CHILD | WS_VISIBLE, CRect(ax, ay, ax+40, ay+25), this);
-    m_txtIpA.Create(WS_CHILD | WS_VISIBLE | WS_BORDER, CRect(ax+45, ay, ax+200, ay+25), this, 10);
+    m_txtIpA.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, CRect(ax+45, ay, ax+200, ay+25), this, 10);
     m_txtIpA.SetWindowText(_T("192.168.0.200"));
     m_btnConnectA.Create(_T("Connect"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, CRect(ax+210, ay, ax+300, ay+25), this, 101);
     m_btnDisconnectA.Create(_T("Disconnect"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, CRect(ax+310, ay, ax+400, ay+25), this, 102);
 
     ay += 40;
     m_lblCmdA.Create(_T("CMD:"), WS_CHILD | WS_VISIBLE, CRect(ax, ay, ax+40, ay+25), this);
-    m_txtCmdA.Create(WS_CHILD | WS_VISIBLE | WS_BORDER, CRect(ax+45, ay, ax+300, ay+25), this, 11);
+    m_txtCmdA.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, CRect(ax+45, ay, ax+300, ay+25), this, 11);
     m_btnSendA.Create(_T("Send"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, CRect(ax+310, ay, ax+400, ay+25), this, 103);
 
     ay += 40;
@@ -205,7 +205,7 @@ BOOL CPDKSampleUIDlg::OnInitDialog()
 
     ay += 40;
     m_lblFileA.Create(_T("File:"), WS_CHILD | WS_VISIBLE, CRect(ax, ay+5, ax+40, ay+25), this);
-    m_txtFileA.Create(WS_CHILD | WS_VISIBLE | WS_BORDER, CRect(ax+45, ay, ax+260, ay+25), this, 13);
+    m_txtFileA.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, CRect(ax+45, ay, ax+260, ay+25), this, 13);
     m_txtFileA.SetWindowText(_T("C:\\Temp\\test.pmc"));
     m_btnSelectA.Create(_T("..."), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, CRect(ax+265, ay, ax+305, ay+25), this, 132);
     m_btnFileA.Create(_T("Download"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, CRect(ax+310, ay, ax+440, ay+25), this, 131);
@@ -216,14 +216,14 @@ BOOL CPDKSampleUIDlg::OnInitDialog()
     // ================= [ PMAC B Area (우측) ] =================
     int bx = 600, by = 20, bw = 550; // 우측 영역 (너비 550)
     m_lblIpB.Create(_T("IP B:"), WS_CHILD | WS_VISIBLE, CRect(bx, by, bx+40, by+25), this);
-    m_txtIpB.Create(WS_CHILD | WS_VISIBLE | WS_BORDER, CRect(bx+45, by, bx+200, by+25), this, 20);
+    m_txtIpB.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, CRect(bx+45, by, bx+200, by+25), this, 20);
     m_txtIpB.SetWindowText(_T("192.168.0.201"));
     m_btnConnectB.Create(_T("Connect"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, CRect(bx+210, by, bx+300, by+25), this, 201);
     m_btnDisconnectB.Create(_T("Disconnect"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, CRect(bx+310, by, bx+400, by+25), this, 202);
 
     by += 40;
     m_lblCmdB.Create(_T("CMD:"), WS_CHILD | WS_VISIBLE, CRect(bx, by, bx+40, by+25), this);
-    m_txtCmdB.Create(WS_CHILD | WS_VISIBLE | WS_BORDER, CRect(bx+45, by, bx+300, by+25), this, 21);
+    m_txtCmdB.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, CRect(bx+45, by, bx+300, by+25), this, 21);
     m_btnSendB.Create(_T("Send"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, CRect(bx+310, by, bx+400, by+25), this, 203);
 
     by += 40;
@@ -247,7 +247,7 @@ BOOL CPDKSampleUIDlg::OnInitDialog()
 
     by += 40;
     m_lblFileB.Create(_T("File:"), WS_CHILD | WS_VISIBLE, CRect(bx, by+5, bx+40, by+25), this);
-    m_txtFileB.Create(WS_CHILD | WS_VISIBLE | WS_BORDER, CRect(bx+45, by, bx+260, by+25), this, 23);
+    m_txtFileB.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, CRect(bx+45, by, bx+260, by+25), this, 23);
     m_txtFileB.SetWindowText(_T("C:\\Temp\\test.pmc"));
     m_btnSelectB.Create(_T("..."), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, CRect(bx+265, by, bx+305, by+25), this, 232);
     m_btnFileB.Create(_T("Download"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, CRect(bx+310, by, bx+440, by+25), this, 231);
@@ -263,6 +263,12 @@ BOOL CPDKSampleUIDlg::OnInitDialog()
 		pChildNode->SetFont(pFont);
 		pChildNode = pChildNode->GetNextWindow();
 	}
+
+	// 입력창 글자수 제한 해제 (3000자 이상 입력 가능하도록 무제한 설정)
+	m_txtCmdA.SetLimitText(0);
+	m_txtCmdB.SetLimitText(0);
+	m_txtFileA.SetLimitText(0);
+	m_txtFileB.SetLimitText(0);
 
 	// 시작 시 200ms 주기로 폴링 타이머 설정
 	SetTimer(1, 200, NULL);
