@@ -5,9 +5,10 @@
 #pragma once
 
 #include "PDK_Library.h"
-#include <vcclr.h>
-#using <mscorlib.dll>
-#include "..\CommunicationWrapper\CommunicationWrapper\PmacMultiWrapper.h"
+#include "PmacNativeManager.h"
+#include <thread>
+
+#define WM_PMAC_CONNECT_RESULT (WM_USER + 100)
 
 // CPDKSampleUIDlg 대화 상자
 class CPDKSampleUIDlg : public CDialogEx
@@ -35,6 +36,7 @@ protected:
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
+	afx_msg LRESULT OnPmacConnectResult(WPARAM wParam, LPARAM lParam);
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnBnClickedConnect();
@@ -81,7 +83,7 @@ public:
 	bool gConnected;
 
 	// Dual Panel Controls
-	gcroot<LegacyPmacWrapper::PmacManagerWrapper^> m_manager;
+	PmacNativeManager m_manager;
 	
 	// --- PMAC A UI ---
 	CStatic m_lblIpA; CEdit m_txtIpA; CButton m_btnConnectA; CButton m_btnDisconnectA;

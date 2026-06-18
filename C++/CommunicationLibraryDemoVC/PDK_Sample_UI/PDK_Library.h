@@ -76,3 +76,15 @@ DllExport bool IsTelnetconnected();
 DllExport bool ISync_TelnetInitDeviceEvent();
 DllExport void ICollectDevicePropertiesDataTelnet(const char** response);
 DllExport int ISync_TelnetSendCommand(const char* command, const char** response);
+//========================================================================
+// Opaque Pointer (Handle) Based Multi-Device Native C API
+//========================================================================
+typedef void* HPmacDevice;
+
+DllExport HPmacDevice PmacCreateDevice();
+DllExport void PmacDestroyDevice(HPmacDevice hDevice);
+DllExport bool PmacConnect(HPmacDevice hDevice, const char* ip, const char* user, const char* pw);
+DllExport void PmacDisconnect(HPmacDevice hDevice);
+DllExport bool PmacIsConnected(HPmacDevice hDevice);
+DllExport int PmacGetResponse(HPmacDevice hDevice, const char* command, const char** response);
+

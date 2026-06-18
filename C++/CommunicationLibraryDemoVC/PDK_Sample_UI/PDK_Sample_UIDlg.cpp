@@ -7,8 +7,7 @@
 #include "PDK_Sample_UI.h"
 #include "PDK_Sample_UIDlg.h"
 #include "afxdialogex.h"
-#include <vcclr.h>
-#include "string.h"
+#include "atlstr.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -84,6 +83,7 @@ BEGIN_MESSAGE_MAP(CPDKSampleUIDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+	ON_MESSAGE(WM_PMAC_CONNECT_RESULT, &CPDKSampleUIDlg::OnPmacConnectResult)
 	
 	// --- PMAC A ---
 	ON_BN_CLICKED(101, &CPDKSampleUIDlg::OnBtnConnectA)
@@ -166,7 +166,8 @@ BOOL CPDKSampleUIDlg::OnInitDialog()
 	// ==========================================
 	// 다중 기기 (듀얼 패널) 동적 UI 생성 코드 시작
 	// ==========================================
-	m_manager = gcnew LegacyPmacWrapper::PmacManagerWrapper();
+	// native PmacNativeManager는 기본 생성자로 자동 초기화됨
+
 
     // 공통 폰트
     CFont* pFont = CFont::FromHandle((HFONT)GetStockObject(DEFAULT_GUI_FONT));
@@ -336,26 +337,38 @@ void CPDKSampleUIDlg::Log(const CString& target, const CString& msg)
 // ==========================================
 // PMAC A Handlers
 // ==========================================
+LRESULT CPDKSampleUIDlg::OnPmacConnectResult(WPARAM wParam, LPARAM lParam)
+{
+    bool isPanelA = (wParam == 0);
+    bool isSuccess = (lParam != 0);
+    CString target = isPanelA ? _T("A") : _T("B");
+    if(isSuccess) Log(target, _T("연결 성공!"));
+    else Log(target, _T("연결 실패!"));
+    return 0;
+}
+
 void CPDKSampleUIDlg::OnBtnConnectA()
 {
     CString ip; m_txtIpA.GetWindowText(ip);
-    System::String^ sysIp = gcnew System::String(ip);
+    CT2A asciiIp(ip);
+    std::string sip(asciiIp.m_psz);
+    m_manager.AddDevice(sip);
+    Log(_T("A"), ip + _T(" 에 연결 시도... (백그라운드)"));
     
-    m_manager->AddDevice(sysIp);
-    auto dev = m_manager->GetDevice(sysIp);
-    
-    Log(_T("A"), ip + _T(" 에 연결 시도..."));
-    bool res = dev->Connect("root", "deltatau");
-    if(res) Log(_T("A"), _T("연결 성공!"));
-    else Log(_T("A"), _T("연결 실패!"));
+    // UI 응답성을 위해 스레드 분리
+    std::thread([this, sip]() {
+        bool res = m_manager.Connect(sip);
+        PostMessage(WM_PMAC_CONNECT_RESULT, 0, (LPARAM)res);
+    }).detach();
 }
 
 void CPDKSampleUIDlg::OnBtnDisconnectA()
 {
     CString ip; m_txtIpA.GetWindowText(ip);
-    auto dev = m_manager->GetDevice(gcnew System::String(ip));
-    if(dev != nullptr && dev->IsConnected) {
-        dev->Disconnect();
+    CT2A asciiIp(ip);
+    std::string sip(asciiIp.m_psz);
+    if(m_manager.IsConnected(sip)) {
+        m_manager.Disconnect(sip);
         Log(_T("A"), _T("연결 해제됨."));
     }
 }
@@ -364,77 +377,55 @@ void CPDKSampleUIDlg::OnBtnSendA()
 {
     CString ip; m_txtIpA.GetWindowText(ip);
     CString cmd; m_txtCmdA.GetWindowText(cmd);
-    
-    auto dev = m_manager->GetDevice(gcnew System::String(ip));
-    if(dev == nullptr || !dev->IsConnected) {
+    CT2A asciiIp(ip); CT2A asciiCmd(cmd);
+    std::string sip(asciiIp.m_psz);
+    if(!m_manager.IsConnected(sip)) {
         Log(_T("A"), _T("Error: Device not connected."));
         return;
     }
-    
-    System::String^ sysRes = dev->SendCommand(gcnew System::String(cmd));
-    CString cstrRes(sysRes);
-
-    // PMAC 제어 문자 필터링 (ACK: \x06, CR: \r)
+    std::string resp = m_manager.SendCommand(sip, std::string(asciiCmd.m_psz));
+    CString cstrRes(resp.c_str());
     cstrRes.Replace(_T("\x06"), _T(""));
     cstrRes.Replace(_T("\r"), _T(""));
-    cstrRes.Trim(); // 앞뒤 공백 및 개행문자 제거
-
+    cstrRes.Trim();
     Log(_T("A"), _T("TX: ") + cmd + _T(" | RX: ") + cstrRes);
 }
 
 void CPDKSampleUIDlg::OnBtnSvOnA()
 {
 	CString ip; m_txtIpA.GetWindowText(ip);
-	auto device = m_manager->GetDevice(gcnew System::String(ip));
-	if (device != nullptr && device->IsConnected) {
-		device->SendCommand(gcnew System::String("#1j/"));
-		Log(_T("A"), _T("SV ON (#1j/)"));
-	}
+	CT2A aip(ip); std::string sip(aip.m_psz);
+	if (m_manager.IsConnected(sip)) { m_manager.SendCommand(sip, "#1j/"); Log(_T("A"), _T("SV ON (#1j/)")); }
 }
 void CPDKSampleUIDlg::OnBtnSvOffA()
 {
 	CString ip; m_txtIpA.GetWindowText(ip);
-	auto device = m_manager->GetDevice(gcnew System::String(ip));
-	if (device != nullptr && device->IsConnected) {
-		device->SendCommand(gcnew System::String("#1k"));
-		Log(_T("A"), _T("SV OFF (#1k)"));
-	}
+	CT2A aip(ip); std::string sip(aip.m_psz);
+	if (m_manager.IsConnected(sip)) { m_manager.SendCommand(sip, "#1k"); Log(_T("A"), _T("SV OFF (#1k)")); }
 }
 void CPDKSampleUIDlg::OnBtnJp1A()
 {
 	CString ip; m_txtIpA.GetWindowText(ip);
-	auto device = m_manager->GetDevice(gcnew System::String(ip));
-	if (device != nullptr && device->IsConnected) {
-		device->SendCommand(gcnew System::String("#1j+"));
-		Log(_T("A"), _T("JOG+ M1 (#1j+)"));
-	}
+	CT2A aip(ip); std::string sip(aip.m_psz);
+	if (m_manager.IsConnected(sip)) { m_manager.SendCommand(sip, "#1j+"); Log(_T("A"), _T("JOG+ M1 (#1j+)")); }
 }
 void CPDKSampleUIDlg::OnBtnJm1A()
 {
 	CString ip; m_txtIpA.GetWindowText(ip);
-	auto device = m_manager->GetDevice(gcnew System::String(ip));
-	if (device != nullptr && device->IsConnected) {
-		device->SendCommand(gcnew System::String("#1j-"));
-		Log(_T("A"), _T("JOG- M1 (#1j-)"));
-	}
+	CT2A aip(ip); std::string sip(aip.m_psz);
+	if (m_manager.IsConnected(sip)) { m_manager.SendCommand(sip, "#1j-"); Log(_T("A"), _T("JOG- M1 (#1j-)")); }
 }
 void CPDKSampleUIDlg::OnBtnJp2A()
 {
 	CString ip; m_txtIpA.GetWindowText(ip);
-	auto device = m_manager->GetDevice(gcnew System::String(ip));
-	if (device != nullptr && device->IsConnected) {
-		device->SendCommand(gcnew System::String("#2j+"));
-		Log(_T("A"), _T("JOG+ M2 (#2j+)"));
-	}
+	CT2A aip(ip); std::string sip(aip.m_psz);
+	if (m_manager.IsConnected(sip)) { m_manager.SendCommand(sip, "#2j+"); Log(_T("A"), _T("JOG+ M2 (#2j+)")); }
 }
 void CPDKSampleUIDlg::OnBtnJm2A()
 {
 	CString ip; m_txtIpA.GetWindowText(ip);
-	auto device = m_manager->GetDevice(gcnew System::String(ip));
-	if (device != nullptr && device->IsConnected) {
-		device->SendCommand(gcnew System::String("#2j-"));
-		Log(_T("A"), _T("JOG- M2 (#2j-)"));
-	}
+	CT2A aip(ip); std::string sip(aip.m_psz);
+	if (m_manager.IsConnected(sip)) { m_manager.SendCommand(sip, "#2j-"); Log(_T("A"), _T("JOG- M2 (#2j-)")); }
 }
 void CPDKSampleUIDlg::OnBtnSelectA()
 {
@@ -473,11 +464,12 @@ void CPDKSampleUIDlg::OnBtnFileA()
 
 		if(bRes) {
 			Log(_T("A"), _T("다운로드 성공. PMAC 버퍼 적용(Compile) 시작..."));
-			auto dev = m_manager->GetDevice(gcnew System::String(ip));
-			if (dev != nullptr && dev->IsConnected) {
+			CT2A aip(ip); std::string sip(aip.m_psz);
+			if (m_manager.IsConnected(sip)) {
 				CString cmd = _T("system gpascii -i") + remotePath + _T(" -e/var/ftp/usrflash/Project/Log/filednlderror.log");
-				System::String^ sysRes = dev->SendCommand(gcnew System::String(cmd));
-				CString cstrRes(sysRes);
+				CT2A acmd(cmd);
+				std::string resp = m_manager.SendCommand(sip, std::string(acmd.m_psz));
+				CString cstrRes(resp.c_str());
 				cstrRes.Replace(_T("\x06"), _T("")); cstrRes.Replace(_T("\r"), _T("")); cstrRes.Trim();
 				Log(_T("A"), _T("적용 응답: ") + cstrRes);
 			} else {
@@ -498,23 +490,24 @@ void CPDKSampleUIDlg::OnBtnFileA()
 void CPDKSampleUIDlg::OnBtnConnectB()
 {
     CString ip; m_txtIpB.GetWindowText(ip);
-    System::String^ sysIp = gcnew System::String(ip);
+    CT2A asciiIp(ip);
+    std::string sip(asciiIp.m_psz);
+    m_manager.AddDevice(sip);
+    Log(_T("B"), ip + _T(" 에 연결 시도... (백그라운드)"));
     
-    m_manager->AddDevice(sysIp);
-    auto dev = m_manager->GetDevice(sysIp);
-    
-    Log(_T("B"), ip + _T(" 에 연결 시도..."));
-    bool res = dev->Connect("root", "deltatau");
-    if(res) Log(_T("B"), _T("연결 성공!"));
-    else Log(_T("B"), _T("연결 실패!"));
+    std::thread([this, sip]() {
+        bool res = m_manager.Connect(sip);
+        PostMessage(WM_PMAC_CONNECT_RESULT, 1, (LPARAM)res);
+    }).detach();
 }
 
 void CPDKSampleUIDlg::OnBtnDisconnectB()
 {
     CString ip; m_txtIpB.GetWindowText(ip);
-    auto dev = m_manager->GetDevice(gcnew System::String(ip));
-    if(dev != nullptr && dev->IsConnected) {
-        dev->Disconnect();
+    CT2A asciiIp(ip);
+    std::string sip(asciiIp.m_psz);
+    if(m_manager.IsConnected(sip)) {
+        m_manager.Disconnect(sip);
         Log(_T("B"), _T("연결 해제됨."));
     }
 }
@@ -523,77 +516,55 @@ void CPDKSampleUIDlg::OnBtnSendB()
 {
     CString ip; m_txtIpB.GetWindowText(ip);
     CString cmd; m_txtCmdB.GetWindowText(cmd);
-    
-    auto dev = m_manager->GetDevice(gcnew System::String(ip));
-    if(dev == nullptr || !dev->IsConnected) {
+    CT2A asciiIp(ip); CT2A asciiCmd(cmd);
+    std::string sip(asciiIp.m_psz);
+    if(!m_manager.IsConnected(sip)) {
         Log(_T("B"), _T("Error: Device not connected."));
         return;
     }
-    
-    System::String^ sysRes = dev->SendCommand(gcnew System::String(cmd));
-    CString cstrRes(sysRes);
-
-    // PMAC 제어 문자 필터링 (ACK: \x06, CR: \r)
+    std::string resp = m_manager.SendCommand(sip, std::string(asciiCmd.m_psz));
+    CString cstrRes(resp.c_str());
     cstrRes.Replace(_T("\x06"), _T(""));
     cstrRes.Replace(_T("\r"), _T(""));
-    cstrRes.Trim(); // 앞뒤 공백 및 개행문자 제거
-
+    cstrRes.Trim();
     Log(_T("B"), _T("TX: ") + cmd + _T(" | RX: ") + cstrRes);
 }
 
 void CPDKSampleUIDlg::OnBtnSvOnB()
 {
 	CString ip; m_txtIpB.GetWindowText(ip);
-	auto device = m_manager->GetDevice(gcnew System::String(ip));
-	if (device != nullptr && device->IsConnected) {
-		device->SendCommand(gcnew System::String("#1j/"));
-		Log(_T("B"), _T("SV ON (#1j/)"));
-	}
+	CT2A aip(ip); std::string sip(aip.m_psz);
+	if (m_manager.IsConnected(sip)) { m_manager.SendCommand(sip, "#1j/"); Log(_T("B"), _T("SV ON (#1j/)")); }
 }
 void CPDKSampleUIDlg::OnBtnSvOffB()
 {
 	CString ip; m_txtIpB.GetWindowText(ip);
-	auto device = m_manager->GetDevice(gcnew System::String(ip));
-	if (device != nullptr && device->IsConnected) {
-		device->SendCommand(gcnew System::String("#1k"));
-		Log(_T("B"), _T("SV OFF (#1k)"));
-	}
+	CT2A aip(ip); std::string sip(aip.m_psz);
+	if (m_manager.IsConnected(sip)) { m_manager.SendCommand(sip, "#1k"); Log(_T("B"), _T("SV OFF (#1k)")); }
 }
 void CPDKSampleUIDlg::OnBtnJp1B()
 {
 	CString ip; m_txtIpB.GetWindowText(ip);
-	auto device = m_manager->GetDevice(gcnew System::String(ip));
-	if (device != nullptr && device->IsConnected) {
-		device->SendCommand(gcnew System::String("#1j+"));
-		Log(_T("B"), _T("JOG+ M1 (#1j+)"));
-	}
+	CT2A aip(ip); std::string sip(aip.m_psz);
+	if (m_manager.IsConnected(sip)) { m_manager.SendCommand(sip, "#1j+"); Log(_T("B"), _T("JOG+ M1 (#1j+)")); }
 }
 void CPDKSampleUIDlg::OnBtnJm1B()
 {
 	CString ip; m_txtIpB.GetWindowText(ip);
-	auto device = m_manager->GetDevice(gcnew System::String(ip));
-	if (device != nullptr && device->IsConnected) {
-		device->SendCommand(gcnew System::String("#1j-"));
-		Log(_T("B"), _T("JOG- M1 (#1j-)"));
-	}
+	CT2A aip(ip); std::string sip(aip.m_psz);
+	if (m_manager.IsConnected(sip)) { m_manager.SendCommand(sip, "#1j-"); Log(_T("B"), _T("JOG- M1 (#1j-)")); }
 }
 void CPDKSampleUIDlg::OnBtnJp2B()
 {
 	CString ip; m_txtIpB.GetWindowText(ip);
-	auto device = m_manager->GetDevice(gcnew System::String(ip));
-	if (device != nullptr && device->IsConnected) {
-		device->SendCommand(gcnew System::String("#2j+"));
-		Log(_T("B"), _T("JOG+ M2 (#2j+)"));
-	}
+	CT2A aip(ip); std::string sip(aip.m_psz);
+	if (m_manager.IsConnected(sip)) { m_manager.SendCommand(sip, "#2j+"); Log(_T("B"), _T("JOG+ M2 (#2j+)")); }
 }
 void CPDKSampleUIDlg::OnBtnJm2B()
 {
 	CString ip; m_txtIpB.GetWindowText(ip);
-	auto device = m_manager->GetDevice(gcnew System::String(ip));
-	if (device != nullptr && device->IsConnected) {
-		device->SendCommand(gcnew System::String("#2j-"));
-		Log(_T("B"), _T("JOG- M2 (#2j-)"));
-	}
+	CT2A aip(ip); std::string sip(aip.m_psz);
+	if (m_manager.IsConnected(sip)) { m_manager.SendCommand(sip, "#2j-"); Log(_T("B"), _T("JOG- M2 (#2j-)")); }
 }
 void CPDKSampleUIDlg::OnBtnSelectB()
 {
@@ -630,11 +601,12 @@ void CPDKSampleUIDlg::OnBtnFileB()
 
 		if(bRes) {
 			Log(_T("B"), _T("다운로드 성공. PMAC 버퍼 적용(Compile) 시작..."));
-			auto dev = m_manager->GetDevice(gcnew System::String(ip));
-			if (dev != nullptr && dev->IsConnected) {
+			CT2A aip(ip); std::string sip(aip.m_psz);
+			if (m_manager.IsConnected(sip)) {
 				CString cmd = _T("system gpascii -i") + remotePath + _T(" -e/var/ftp/usrflash/Project/Log/filednlderror.log");
-				System::String^ sysRes = dev->SendCommand(gcnew System::String(cmd));
-				CString cstrRes(sysRes);
+				CT2A acmd(cmd);
+				std::string resp = m_manager.SendCommand(sip, std::string(acmd.m_psz));
+				CString cstrRes(resp.c_str());
 				cstrRes.Replace(_T("\x06"), _T("")); cstrRes.Replace(_T("\r"), _T("")); cstrRes.Trim();
 				Log(_T("B"), _T("적용 응답: ") + cstrRes);
 			} else {
@@ -653,41 +625,29 @@ void CPDKSampleUIDlg::OnBtnFileB()
 void CPDKSampleUIDlg::OnBtnSvOn2A()
 {
 	CString ip; m_txtIpA.GetWindowText(ip);
-	auto device = m_manager->GetDevice(gcnew System::String(ip));
-	if (device != nullptr && device->IsConnected) {
-		device->SendCommand(gcnew System::String("#2j/"));
-		Log(_T("A"), _T("SV ON M2 (#2j/)"));
-	}
+	CT2A aip(ip); std::string sip(aip.m_psz);
+	if (m_manager.IsConnected(sip)) { m_manager.SendCommand(sip, "#2j/"); Log(_T("A"), _T("SV ON M2 (#2j/)")); }
 }
 
 void CPDKSampleUIDlg::OnBtnSvOff2A()
 {
 	CString ip; m_txtIpA.GetWindowText(ip);
-	auto device = m_manager->GetDevice(gcnew System::String(ip));
-	if (device != nullptr && device->IsConnected) {
-		device->SendCommand(gcnew System::String("#2k"));
-		Log(_T("A"), _T("SV OFF M2 (#2k)"));
-	}
+	CT2A aip(ip); std::string sip(aip.m_psz);
+	if (m_manager.IsConnected(sip)) { m_manager.SendCommand(sip, "#2k"); Log(_T("A"), _T("SV OFF M2 (#2k)")); }
 }
 
 void CPDKSampleUIDlg::OnBtnSvOn2B()
 {
 	CString ip; m_txtIpB.GetWindowText(ip);
-	auto device = m_manager->GetDevice(gcnew System::String(ip));
-	if (device != nullptr && device->IsConnected) {
-		device->SendCommand(gcnew System::String("#2j/"));
-		Log(_T("B"), _T("SV ON M2 (#2j/)"));
-	}
+	CT2A aip(ip); std::string sip(aip.m_psz);
+	if (m_manager.IsConnected(sip)) { m_manager.SendCommand(sip, "#2j/"); Log(_T("B"), _T("SV ON M2 (#2j/)")); }
 }
 
 void CPDKSampleUIDlg::OnBtnSvOff2B()
 {
 	CString ip; m_txtIpB.GetWindowText(ip);
-	auto device = m_manager->GetDevice(gcnew System::String(ip));
-	if (device != nullptr && device->IsConnected) {
-		device->SendCommand(gcnew System::String("#2k"));
-		Log(_T("B"), _T("SV OFF M2 (#2k)"));
-	}
+	CT2A aip(ip); std::string sip(aip.m_psz);
+	if (m_manager.IsConnected(sip)) { m_manager.SendCommand(sip, "#2k"); Log(_T("B"), _T("SV OFF M2 (#2k)")); }
 }
 
 void CPDKSampleUIDlg::OnTimer(UINT_PTR nIDEvent)
@@ -695,74 +655,28 @@ void CPDKSampleUIDlg::OnTimer(UINT_PTR nIDEvent)
 	if (nIDEvent == 1) {
 		CString ipA; m_txtIpA.GetWindowText(ipA);
 		CString ipB; m_txtIpB.GetWindowText(ipB);
+		CT2A aipA(ipA); CT2A aipB(ipB);
+		std::string sipA(aipA.m_psz), sipB(aipB.m_psz);
 
-		// 메모리 우상향(GC Pressure) 방지를 위한 쿼리 문자열 정적 캐싱 (C++/CLI 에러 방지용 gcroot 적용)
-		static gcroot<System::String^> cmdAct1 = gcnew System::String("Motor[1].ActPos");
-		static gcroot<System::String^> cmdHome1 = gcnew System::String("Motor[1].HomePos");
-		static gcroot<System::String^> cmdAct2 = gcnew System::String("Motor[2].ActPos");
-		static gcroot<System::String^> cmdHome2 = gcnew System::String("Motor[2].HomePos");
-
-		auto devA = m_manager->GetDevice(gcnew System::String(ipA));
-		if (devA != nullptr && devA->IsConnected) {
-			// 모터 1
-			CString strAct1 = CString(devA->SendCommand(cmdAct1));
-			strAct1.Replace(_T("\x06"), _T("")); strAct1.Replace(_T("\r"), _T("")); strAct1.Replace(_T("\n"), _T("")); strAct1.Trim();
-			int eq1 = strAct1.Find(_T("=")); if(eq1 != -1) strAct1 = strAct1.Mid(eq1 + 1);
-
-			CString strHome1 = CString(devA->SendCommand(cmdHome1));
-			strHome1.Replace(_T("\x06"), _T("")); strHome1.Replace(_T("\r"), _T("")); strHome1.Replace(_T("\n"), _T("")); strHome1.Trim();
-			int eh1 = strHome1.Find(_T("=")); if(eh1 != -1) strHome1 = strHome1.Mid(eh1 + 1);
-
-			double valAct1 = _ttof(strAct1);
-			double valHome1 = _ttof(strHome1);
-			CString res1; res1.Format(_T("%.4f"), valAct1 - valHome1);
-			m_txtPos1A.SetWindowText(res1);
-
-			// 모터 2
-			CString strAct2 = CString(devA->SendCommand(cmdAct2));
-			strAct2.Replace(_T("\x06"), _T("")); strAct2.Replace(_T("\r"), _T("")); strAct2.Replace(_T("\n"), _T("")); strAct2.Trim();
-			int eq2 = strAct2.Find(_T("=")); if(eq2 != -1) strAct2 = strAct2.Mid(eq2 + 1);
-
-			CString strHome2 = CString(devA->SendCommand(cmdHome2));
-			strHome2.Replace(_T("\x06"), _T("")); strHome2.Replace(_T("\r"), _T("")); strHome2.Replace(_T("\n"), _T("")); strHome2.Trim();
-			int eh2 = strHome2.Find(_T("=")); if(eh2 != -1) strHome2 = strHome2.Mid(eh2 + 1);
-			
-			double valAct2 = _ttof(strAct2);
-			double valHome2 = _ttof(strHome2);
-			CString res2; res2.Format(_T("%.4f"), valAct2 - valHome2);
-			m_txtPos2A.SetWindowText(res2);
-		}
-
-		auto devB = m_manager->GetDevice(gcnew System::String(ipB));
-		if (devB != nullptr && devB->IsConnected) {
-			// 모터 1
-			CString strAct1 = CString(devB->SendCommand(cmdAct1));
-			strAct1.Replace(_T("\x06"), _T("")); strAct1.Replace(_T("\r"), _T("")); strAct1.Replace(_T("\n"), _T("")); strAct1.Trim();
-			int eq1 = strAct1.Find(_T("=")); if(eq1 != -1) strAct1 = strAct1.Mid(eq1 + 1);
-
-			CString strHome1 = CString(devB->SendCommand(cmdHome1));
-			strHome1.Replace(_T("\x06"), _T("")); strHome1.Replace(_T("\r"), _T("")); strHome1.Replace(_T("\n"), _T("")); strHome1.Trim();
-			int eh1 = strHome1.Find(_T("=")); if(eh1 != -1) strHome1 = strHome1.Mid(eh1 + 1);
-			
-			double valAct1 = _ttof(strAct1);
-			double valHome1 = _ttof(strHome1);
-			CString res1; res1.Format(_T("%.4f"), valAct1 - valHome1);
-			m_txtPos1B.SetWindowText(res1);
-
-			// 모터 2
-			CString strAct2 = CString(devB->SendCommand(cmdAct2));
-			strAct2.Replace(_T("\x06"), _T("")); strAct2.Replace(_T("\r"), _T("")); strAct2.Replace(_T("\n"), _T("")); strAct2.Trim();
-			int eq2 = strAct2.Find(_T("=")); if(eq2 != -1) strAct2 = strAct2.Mid(eq2 + 1);
-
-			CString strHome2 = CString(devB->SendCommand(cmdHome2));
-			strHome2.Replace(_T("\x06"), _T("")); strHome2.Replace(_T("\r"), _T("")); strHome2.Replace(_T("\n"), _T("")); strHome2.Trim();
-			int eh2 = strHome2.Find(_T("=")); if(eh2 != -1) strHome2 = strHome2.Mid(eh2 + 1);
-			
-			double valAct2 = _ttof(strAct2);
-			double valHome2 = _ttof(strHome2);
-			CString res2; res2.Format(_T("%.4f"), valAct2 - valHome2);
-			m_txtPos2B.SetWindowText(res2);
-		}
+		auto queryPos = [&](std::string& sip, CEdit& txtPos1, CEdit& txtPos2) {
+			if (!m_manager.IsConnected(sip)) return;
+			auto parse = [&](const std::string& raw) -> CString {
+				CString s(raw.c_str());
+				s.Replace(_T("\x06"),_T("")); s.Replace(_T("\r"),_T("")); s.Replace(_T("\n"),_T("")); s.Trim();
+				int eq = s.Find(_T("=")); if(eq != -1) s = s.Mid(eq+1);
+				return s;
+			};
+			CString strAct1  = parse(m_manager.SendCommand(sip, "Motor[1].ActPos"));
+			CString strHome1 = parse(m_manager.SendCommand(sip, "Motor[1].HomePos"));
+			CString res1; res1.Format(_T("%.4f"), _ttof(strAct1) - _ttof(strHome1));
+			txtPos1.SetWindowText(res1);
+			CString strAct2  = parse(m_manager.SendCommand(sip, "Motor[2].ActPos"));
+			CString strHome2 = parse(m_manager.SendCommand(sip, "Motor[2].HomePos"));
+			CString res2; res2.Format(_T("%.4f"), _ttof(strAct2) - _ttof(strHome2));
+			txtPos2.SetWindowText(res2);
+		};
+		queryPos(sipA, m_txtPos1A, m_txtPos2A);
+		queryPos(sipB, m_txtPos1B, m_txtPos2B);
 	}
 	CDialogEx::OnTimer(nIDEvent);
 }
@@ -772,9 +686,8 @@ void CPDKSampleUIDlg::HandleJogCommand(CString pmacId, int motor, bool isPlus, b
 	CString ip;
 	if (pmacId == _T("A")) m_txtIpA.GetWindowText(ip);
 	else m_txtIpB.GetWindowText(ip);
-
-	auto device = m_manager->GetDevice(gcnew System::String(ip));
-	if (device != nullptr && device->IsConnected) {
+	CT2A aip(ip); std::string sip(aip.m_psz);
+	if (m_manager.IsConnected(sip)) {
 		CString cmd;
 		if (isDown) {
 			cmd.Format(_T("#%dj%s"), motor, isPlus ? _T("+") : _T("-"));
@@ -783,7 +696,8 @@ void CPDKSampleUIDlg::HandleJogCommand(CString pmacId, int motor, bool isPlus, b
 			cmd.Format(_T("#%dj/"), motor);
 			Log(pmacId, CString(_T("JOG STOP M")) + CString(std::to_wstring(motor).c_str()) + _T(" (") + cmd + _T(")"));
 		}
-		device->SendCommand(gcnew System::String(cmd));
+		CT2A acmd(cmd);
+		m_manager.SendCommand(sip, std::string(acmd.m_psz));
 	}
 }
 
@@ -806,3 +720,4 @@ BOOL CPDKSampleUIDlg::PreTranslateMessage(MSG* pMsg)
 	}
 	return CDialogEx::PreTranslateMessage(pMsg);
 }
+

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Common.h"
 #include <string>
 #include <vector>
@@ -429,3 +429,79 @@ DllExport bool ISyncGpAsciiInitDeviceEvent()
 	SyncGpAsciiWrapper::SyncGpAsciiCLI m_Library;
 	return m_Library.Sync_GpAsciiInitDeviceEvent();
 }
+//========================================================================
+// Opaque Pointer (Handle) Based Multi-Device Native C API
+//========================================================================
+#include "PmacMultiWrapper.h"
+#include <vcclr.h>
+
+struct MultiDeviceHandle {
+    gcroot<LegacyPmacWrapper::PmacDeviceWrapper^> device;
+    std::string lastResponse;
+};
+
+DllExport void* PmacCreateDevice()
+{
+    MultiDeviceHandle* handle = new MultiDeviceHandle();
+    return (void*)handle;
+}
+
+DllExport void PmacDestroyDevice(void* handle)
+{
+    if (handle) {
+        MultiDeviceHandle* h = (MultiDeviceHandle*)handle;
+        if (((LegacyPmacWrapper::PmacDeviceWrapper^)h->device) != nullptr) {
+            h->device->Disconnect();
+        }
+        delete h;
+    }
+}
+
+DllExport bool PmacConnect(void* handle, const char* ip, const char* user, const char* pw)
+{
+    if (!handle) return false;
+    MultiDeviceHandle* h = (MultiDeviceHandle*)handle;
+    h->device = gcnew LegacyPmacWrapper::PmacDeviceWrapper(gcnew System::String(ip));
+    return h->device->Connect(gcnew System::String(user), gcnew System::String(pw));
+}
+
+DllExport void PmacDisconnect(void* handle)
+{
+    if (!handle) return;
+    MultiDeviceHandle* h = (MultiDeviceHandle*)handle;
+    if (((LegacyPmacWrapper::PmacDeviceWrapper^)h->device) != nullptr) {
+        h->device->Disconnect();
+    }
+}
+
+DllExport bool PmacIsConnected(void* handle)
+{
+    if (!handle) return false;
+    MultiDeviceHandle* h = (MultiDeviceHandle*)handle;
+    if (((LegacyPmacWrapper::PmacDeviceWrapper^)h->device) != nullptr) {
+        return h->device->IsConnected;
+    }
+    return false;
+}
+
+DllExport int PmacGetResponse(void* handle, const char* command, const char** response)
+{
+    if (!handle) return -1;
+    MultiDeviceHandle* h = (MultiDeviceHandle*)handle;
+    if (((LegacyPmacWrapper::PmacDeviceWrapper^)h->device) == nullptr || !h->device->IsConnected) return DEVICENOTCONNECT;
+
+    System::String^ sysCmd = gcnew System::String(command);
+    System::String^ sysResp = h->device->SendCommand(sysCmd);
+    
+    System::IntPtr ptrTemp = System::Runtime::InteropServices::Marshal::StringToHGlobalAnsi(sysResp);
+    h->lastResponse = static_cast<const char*>(ptrTemp.ToPointer());
+    System::Runtime::InteropServices::Marshal::FreeHGlobal(ptrTemp);
+    
+    if (response != nullptr) {
+        *response = h->lastResponse.c_str();
+    }
+    
+    if (sysResp->StartsWith("Error")) return FAILEDTOCONNECT;
+    return SUCCESS;
+}
+
