@@ -2,108 +2,128 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>C++ 멀티 디바이스 접속 가이드</title>
+    <title>순수 Native C++ 멀티 디바이스(다중 장비) 접속 및 제어 가이드</title>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            font-family: 'Malgun Gothic', 'Segoe UI', Arial, sans-serif;
             line-height: 1.6;
             color: #333;
             max-width: 900px;
             margin: 0 auto;
-            padding: 40px;
-            background-color: #f6f8fa;
+            padding: 20px;
+            background-color: #f9f9f9;
         }
-        .container {
-            background-color: #ffffff;
-            border: 1px solid #e1e4e8;
-            border-radius: 6px;
-            padding: 40px;
-            box-shadow: 0 1px 3px rgba(27,31,35,0.12);
+        h1, h2, h3 {
+            color: #2c3e50;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
         }
-        h1, h2, h3 { border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; margin-top: 24px; margin-bottom: 16px; }
-        code { background-color: #f6f8fa; padding: 0.2em 0.4em; border-radius: 3px; font-family: Consolas, monospace; font-size: 85%; color: #e36209; }
-        pre { background-color: #f6f8fa; border: 1px solid #eaecef; padding: 16px; border-radius: 6px; overflow: auto; }
-        pre code { background-color: transparent; padding: 0; color: #24292e; font-size: 14px; }
-        .alert { padding: 15px; margin-bottom: 20px; border: 1px solid transparent; border-radius: 4px; border-left: 5px solid #0366d6; background-color: #f1f8ff; color: #24292e; }
-        .alert-warning { border-left-color: #cb2431; background-color: #ffeef0; }
-        .comment { color: #6a737d; }
-        .keyword { color: #d73a49; }
-        .string { color: #032f62; }
+        h1 { font-size: 2em; border-bottom: 2px solid #2980b9; }
+        h2 { font-size: 1.5em; margin-top: 30px; }
+        h3 { font-size: 1.2em; border: none; }
+        pre {
+            background-color: #2b2b2b;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-family: Consolas, 'Courier New', monospace;
+        }
+        code {
+            font-family: Consolas, 'Courier New', monospace;
+            background-color: #e8e8e8;
+            padding: 2px 4px;
+            border-radius: 3px;
+            color: #d63384;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            color: inherit;
+        }
+        .important {
+            background-color: #fff3cd;
+            border-left: 5px solid #ffecb5;
+            padding: 15px;
+            margin: 20px 0;
+            color: #856404;
+        }
+        .important strong { font-size: 1.1em; display: block; margin-bottom: 5px; }
+        hr { border: 0; height: 1px; background: #ddd; margin: 40px 0; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>C++ 멀티 디바이스(다중 장비) 접속 및 제어 가이드</h1>
+    <h1>순수 Native C++ 멀티 디바이스(다중 장비) 접속 및 제어 가이드</h1>
     <p>본 문서는 C++ 개발자가 본 라이브러리(<code>CommunicationWrapper.dll</code>)를 사용하여 <strong>두 대 이상의 Power PMAC 장비에 동시에 접속하고 제어하는 방법</strong>에 집중하여 설명합니다.</p>
+    <hr>
 
     <h2>1. 다중 장비 접속(Connect) 원리</h2>
-    <p>본 라이브러리는 <code>PmacManagerWrapper</code> 단일 매니저 클래스를 통해 내부적으로 IP 주소를 키(Key)로 하는 딕셔너리(Dictionary) 형태로 다수의 장비 통신 객체를 관리합니다. 따라서 개발자는 접속할 장비의 IP만 넘겨주면 독립된 통신 객체를 획득할 수 있습니다.</p>
+    <p>이전 구조와 달리, 이제 UI 프로젝트는 <code>/clr</code> 옵션이 필요 없는 <strong>순수 Native C++</strong> 로 동작합니다. <br>
+    내부적으로 DLL에서 메모리 포인터 형태의 <code>Handle(void*)</code>을 발급받아, 이를 캡슐화한 <code>PmacNativeManager</code> 클래스를 통해 IP 주소별로 다수의 장비를 완벽히 격리하여 관리합니다.</p>
 
-    <h3>접속 예제 코드 (C++)</h3>
-<pre><code><span class="comment">// 1. 매니저 객체 선언 (일반적으로 다이얼로그 클래스의 멤버로 선언)</span>
-PmacManagerWrapper^ m_manager = <span class="keyword">gcnew</span> PmacManagerWrapper();
+    <h3>접속 예제 코드 (Native C++)</h3>
+<pre><code>#include "PmacNativeManager.h"
 
-<span class="comment">// 2. IP 문자열 정의</span>
-System::String^ ipA = <span class="keyword">gcnew</span> System::String(<span class="string">"192.168.0.200"</span>);
-System::String^ ipB = <span class="keyword">gcnew</span> System::String(<span class="string">"192.168.0.201"</span>);
+// 1. 매니저 객체 선언 (보통 다이얼로그의 멤버 변수로 선언)
+PmacNativeManager m_manager;
 
-<span class="comment">// 3. GetDevice(IP)를 호출하여 각 장비의 전용 객체 포인터 획득</span>
-<span class="keyword">auto</span> devA = m_manager->GetDevice(ipA);
-<span class="keyword">auto</span> devB = m_manager->GetDevice(ipB);
+// 2. IP 문자열 정의 (표준 std::string 사용)
+std::string ipA = "192.168.0.200";
+std::string ipB = "192.168.0.201";
 
-<span class="comment">// 4. 각각의 객체로 물리적 접속 시도</span>
-<span class="keyword">bool</span> isConnectedA = devA->Connect(ipA);
-<span class="keyword">bool</span> isConnectedB = devB->Connect(ipB);
+// 3. 각각의 IP로 물리적 접속 시도 (AddDevice는 내부에서 자동 호출됨)
+// 주의: 응답성이 중요한 경우 UI 멈춤 방지를 위해 std::thread 등 비동기로 호출 권장
+bool isConnectedA = m_manager.Connect(ipA);
+bool isConnectedB = m_manager.Connect(ipB);
 
-<span class="keyword">if</span> (isConnectedA && isConnectedB) {
-    <span class="comment">// 다중 장비 동시 접속 완료</span>
+if (isConnectedA && isConnectedB) {
+    // 다중 장비 동시 접속 완료 (각 장비는 독립된 소켓과 세션을 유지함)
 }</code></pre>
+    <hr>
 
     <h2>2. 다중 장비 개별 제어 (Command)</h2>
-    <p>접속이 완료되면, 앞서 획득한 <code>devA</code>와 <code>devB</code> 포인터를 사용하여 완전히 격리된 명령을 동시에 전송할 수 있습니다. 각 포인터는 독립된 SSH 소켓과 스레드 동기화 락(Lock)을 소유하고 있으므로 패킷이 엉키지 않습니다.</p>
+    <p>접속이 완료되면 매니저의 <code>SendCommand</code> 함수에 해당 장비의 IP와 명령어를 전달하기만 하면 됩니다. DLL 내부에서 해당 IP의 <code>Handle</code>을 찾아 독립된 통신 객체로 명령을 전송하므로 장비 간 패킷 충돌이나 뻗음(Crash) 현상이 전혀 발생하지 않습니다.</p>
 
-    <h3>명령어 전송 예제 (C++)</h3>
-<pre><code><span class="comment">// PMAC A 장비(192.168.0.200)의 1번 모터 조그(JOG) 구동</span>
-devA->SendCommand(<span class="string">"#1J+"</span>);
+    <h3>명령어 전송 예제 (Native C++)</h3>
+<pre><code>// PMAC A 장비(192.168.0.200)의 1번 모터 조그(JOG) 구동
+std::string resA = m_manager.SendCommand("192.168.0.200", "#1J+");
 
-<span class="comment">// PMAC B 장비(192.168.0.201)의 1번 모터 조그(JOG) 구동</span>
-devB->SendCommand(<span class="string">"#1J+"</span>);
+// PMAC B 장비(192.168.0.201)의 1번 모터 조그(JOG) 구동
+std::string resB = m_manager.SendCommand("192.168.0.201", "#1J+");
 
-<span class="comment">// PMAC A 장비 정지</span>
-devA->SendCommand(<span class="string">"#1J/"</span>);</code></pre>
+// PMAC A 장비 정지
+m_manager.SendCommand("192.168.0.200", "#1J/");</code></pre>
+    <hr>
 
     <h2>3. 실시간 동시 모니터링 (타이머 기반)</h2>
-    <p>여러 장비의 상태(위치값 등)를 동시에 모니터링할 때는 C++의 타이머(<code>OnTimer</code>)나 별도의 쓰레드를 사용하여 각 기기 객체의 <code>GetResponse</code>를 연속 호출하면 됩니다.</p>
+    <p>여러 장비의 상태(위치값 등)를 동시에 모니터링할 때는 C++의 타이머(<code>OnTimer</code>)를 사용하여 <code>SendCommand</code>를 연속 호출하면 됩니다. 더 이상 장비를 전환할 때마다 Re-connect(끊고 다시 연결)를 수행할 필요가 없습니다.</p>
 
-    <h3>위치값(ActPos) 병렬 폴링 예제 (C++)</h3>
-<pre><code><span class="keyword">void</span> CPDKSampleUIDlg::OnTimer(UINT_PTR nIDEvent)
+    <h3>위치값 병렬 폴링 예제 (MFC)</h3>
+<pre><code>void CPDKSampleUIDlg::OnTimer(UINT_PTR nIDEvent)
 {
-    <span class="comment">// 타이머 틱(예: 200ms)마다 양쪽 장비에 상태를 요청</span>
+    // 타이머 틱(예: 200ms)마다 양쪽 장비에 상태를 요청
     
-    <span class="comment">// 1. PMAC A의 위치 쿼리</span>
-    <span class="keyword">auto</span> devA = m_manager->GetDevice(<span class="keyword">gcnew</span> System::String(<span class="string">"192.168.0.200"</span>));
-    <span class="keyword">if</span> (devA->IsConnected()) 
+    // PMAC A 위치 쿼리
+    if (m_manager.IsConnected("192.168.0.200"))
     {
-        CString resA = devA->GetResponse(<span class="string">"Motor[1].Pos"</span>);
-        <span class="comment">// 응답 예시: "Motor[1].Pos=123.456\r\n\x06" -> '=' 뒷부분 파싱 필요</span>
+        std::string resA = m_manager.SendCommand("192.168.0.200", "Motor[1].Pos");
+        // 응답 예시: "Motor[1].Pos=123.456" 
     }
 
-    <span class="comment">// 2. PMAC B의 위치 쿼리</span>
-    <span class="keyword">auto</span> devB = m_manager->GetDevice(<span class="keyword">gcnew</span> System::String(<span class="string">"192.168.0.201"</span>));
-    <span class="keyword">if</span> (devB->IsConnected()) 
+    // PMAC B 위치 쿼리
+    if (m_manager.IsConnected("192.168.0.201"))
     {
-        CString resB = devB->GetResponse(<span class="string">"Motor[1].Pos"</span>);
+        std::string resB = m_manager.SendCommand("192.168.0.201", "Motor[1].Pos");
     }
 
     CDialogEx::OnTimer(nIDEvent);
 }</code></pre>
 
-    <div class="alert alert-warning">
-        <strong>[중요 주의사항]</strong><br>
-        <code>devA->IsConnected()</code> 처럼 통신 연결 상태를 먼저 체크한 후 <code>GetResponse</code>를 호출해야 합니다. 장비가 꺼져있을 때 호출하면 통신 라이브러리 내부에서 예기치 않은 에러(Null 예외)가 발생할 수 있습니다.
+    <div class="important">
+        <strong>[!IMPORTANT]</strong><br>
+        <code>m_manager.SendCommand</code>를 호출하기 전에 응답 지연(Timeout)을 방지하기 위해 <code>m_manager.IsConnected()</code>로 연결 상태를 먼저 체크하는 것을 권장합니다.
     </div>
-</div>
 
 </body>
 </html>
